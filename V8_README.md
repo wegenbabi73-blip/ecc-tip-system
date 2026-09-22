@@ -37,7 +37,3 @@ For a physical phone, set the API base using browser/dev tooling or replace the 
 
 ## Build
 In Android Studio: Build → Generate App Bundles or APKs.
-
-## Phone-only APK build
-This release includes `.github/workflows/android-apk.yml`. You can upload the project to GitHub from an Android phone and run the workflow to build an installable debug APK without Android Studio.
-See `PHONE_BUILD.md`.

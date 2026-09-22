@@ -1,0 +1,17 @@
+<!doctype html><html lang="am"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ECC Reports</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
+<body class="bg-slate-100"><header class="bg-slate-950 text-white p-4"><div class="max-w-6xl mx-auto flex justify-between"><b>ECC — Reports</b><a href="admin.html" class="text-blue-300">← Dashboard</a></div></header>
+<main class="max-w-6xl mx-auto p-4 space-y-4"><div class="flex gap-2"><button onclick="downloadCSV()" class="bg-emerald-600 text-white rounded px-4 py-2">Export CSV</button><button onclick="window.print()" class="bg-slate-700 text-white rounded px-4 py-2">Print / PDF</button></div>
+<div class="grid md:grid-cols-3 gap-4"><div class="bg-white rounded-xl p-5"><span class="text-slate-500">Total Tips</span><b id="total" class="block text-3xl"></b></div><div class="bg-white rounded-xl p-5"><span class="text-slate-500">High Risk</span><b id="high" class="block text-3xl"></b></div><div class="bg-white rounded-xl p-5"><span class="text-slate-500">Open</span><b id="open" class="block text-3xl"></b></div></div>
+<div class="grid md:grid-cols-2 gap-4"><div class="bg-white rounded-xl p-4"><h2 class="font-bold mb-2">By Risk</h2><canvas id="risk"></canvas></div><div class="bg-white rounded-xl p-4"><h2 class="font-bold mb-2">By Category</h2><canvas id="cat"></canvas></div></div>
+<div class="bg-white rounded-xl p-4"><h2 class="font-bold mb-2">By Status</h2><canvas id="status"></canvas></div>
+</main><script src="api.js"></script><script>
+let data;async function load(){data=await eccApi("/reports/summary");total.textContent=data.total;high.textContent=data.byRisk.find(x=>x.name==="High")?.value||0;open.textContent=data.byStatus.filter(x=>!["Closed"].includes(x.name)).reduce((a,x)=>a+Number(x.value),0);new Chart(risk,{type:"doughnut",data:{labels:data.byRisk.map(x=>x.name),datasets:[{data:data.byRisk.map(x=>x.value)}]}});new Chart(cat,{type:"bar",data:{labels:data.byCategory.map(x=>x.name),datasets:[{label:"Tips",data:data.byCategory.map(x=>x.value)}]}});new Chart(status,{type:"bar",data:{labels:data.byStatus.map(x=>x.name),datasets:[{label:"Tips",data:data.byStatus.map(x=>x.value)}]}})}async function downloadCSV(){const r=await fetch(ECC_API_BASE+"/reports/tips.csv",{headers:{Authorization:"Bearer "+localStorage.getItem("ecc_access_token")}});if(!r.ok){alert("Export failed");return;}const b=await r.blob(),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="ecc-tips-report.csv";a.click();URL.revokeObjectURL(u);}load();
+</script>
+<section class="mt-6 bg-white rounded-2xl shadow p-5"><h2 class="text-lg font-bold">Report Date Range</h2>
+<div class="flex flex-wrap gap-3 mt-3"><input id="v7rf" type="date" class="border rounded-xl p-3"><input id="v7rt" type="date" class="border rounded-xl p-3"><button onclick="v7csv()" class="px-4 py-2 rounded-xl bg-slate-900 text-white">Export CSV</button></div></section>
+<script>
+async function v7csv(){const p=new URLSearchParams();if(v7rf.value)p.set('date_from',v7rf.value);if(v7rt.value)p.set('date_to',v7rt.value);
+const r=await fetch(ECC_API_BASE+'/reports/tips.csv?'+p,{headers:{Authorization:'Bearer '+localStorage.getItem('ecc_access_token')}});if(!r.ok){alert('Export failed');return;}
+const b=await r.blob(),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='ecc-tips-report.csv';a.click();URL.revokeObjectURL(u);}
+</script>
+</body></html>

@@ -1,0 +1,25 @@
+<!doctype html><html lang="am"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ECC Users</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="bg-slate-100"><header class="bg-slate-950 text-white p-4"><div class="max-w-6xl mx-auto flex justify-between"><b>ECC — User Management</b><a href="admin.html" class="text-blue-300">← Dashboard</a></div></header>
+<main class="max-w-6xl mx-auto p-4 space-y-4"><section class="bg-white p-4 rounded-xl"><h2 class="font-bold mb-3">Create user</h2><div class="grid md:grid-cols-4 gap-2"><input id="nu" class="border p-2 rounded" placeholder="Username"><input id="np" type="password" class="border p-2 rounded" placeholder="Password (12+ chars)"><select id="nr" class="border p-2 rounded"><option>officer</option><option>analyst</option><option>supervisor</option><option>admin</option></select><button onclick="createUser()" class="bg-blue-600 text-white rounded p-2">Create</button></div><p id="msg" class="mt-2 text-sm"></p></section>
+<section class="bg-white p-4 rounded-xl overflow-auto"><table class="w-full text-sm"><thead><tr class="border-b"><th class="p-2">ID</th><th class="p-2 text-left">Username</th><th class="p-2">Role</th><th class="p-2">MFA</th><th class="p-2">Active</th><th class="p-2">Actions</th></tr></thead><tbody id="rows"></tbody></table></section>
+<section id="mfaPanel" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-5 max-w-md w-full"><h2 class="font-bold text-xl">Enable MFA</h2><p class="text-sm text-slate-500 mb-3">በAuthenticator app የQR ኮዱን ይቃኙ።</p><img id="qr" class="mx-auto w-56 h-56"><input id="mfaCode" class="border p-3 rounded w-full text-center tracking-widest text-xl mt-3" maxlength="6" placeholder="000000"><button onclick="enableMfa()" class="w-full bg-emerald-600 text-white p-3 rounded mt-3">Enable</button><button onclick="mfaPanel.classList.add('hidden')" class="w-full p-3 mt-2">Close</button><p id="mmsg" class="text-sm mt-2"></p></div></section></main>
+<script src="api.js"></script><script>
+const me=eccCurrentUser();if(!me||me.role!=="admin")location.href="admin.html";let mfaUserId=null;
+async function load(){const d=await eccApi("/users");rows.innerHTML=d.map(u=>`<tr class="border-b"><td class="p-2 text-center">${u.id}</td><td class="p-2">${u.username}</td><td class="p-2 text-center">${u.role}</td><td class="p-2 text-center">${u.mfa_enabled?"Enabled":"Off"}</td><td class="p-2 text-center">${u.active?"Yes":"No"}</td><td class="p-2 text-center space-x-1">${!u.mfa_enabled?`<button class="bg-emerald-600 text-white px-2 py-1 rounded" onclick="setupMfa(${u.id})">MFA</button>`:""}<button class="bg-slate-200 px-2 py-1 rounded" onclick="toggleUser(${u.id},${u.active})">${u.active?"Disable":"Enable"}</button></td></tr>`).join("")}
+async function createUser(){msg.textContent="";try{await eccApi("/users",{method:"POST",body:JSON.stringify({username:nu.value,password:np.value,role:nr.value})});msg.textContent="Created";nu.value=np.value="";load()}catch(e){msg.textContent=e.message}}
+async function toggleUser(id,active){await eccApi("/users/"+id,{method:"PATCH",body:JSON.stringify({active:!active})});load()}
+async function setupMfa(id){/* MFA enrollment is intentionally for the logged-in admin account only in this V4 starter. */if(id!==me.id){mmsg.textContent="For security, each user should enroll MFA from their own account.";mfaPanel.classList.remove("hidden");qr.style.display="none";return}const d=await eccApi("/auth/mfa/setup",{method:"POST"});mfaUserId=id;qr.style.display="block";qr.src=d.qrDataUrl;mfaPanel.classList.remove("hidden")}
+async function enableMfa(){try{await eccApi("/auth/mfa/enable",{method:"POST",body:JSON.stringify({code:mfaCode.value})});mmsg.textContent="MFA enabled. You will use it at next login.";setTimeout(()=>location.reload(),1000)}catch(e){mmsg.textContent=e.message}}
+load();
+</script>
+<section class="mt-6 bg-white rounded-2xl shadow p-5">
+<h2 class="text-lg font-bold">Super Admin Control Center</h2><div id="v7overview" class="grid md:grid-cols-6 gap-3 mt-4"></div>
+</section>
+<script>
+(async()=>{try{const r=await fetch(ECC_API_BASE+'/admin/overview',{headers:{Authorization:'Bearer '+localStorage.getItem('ecc_access_token')}});const d=await r.json();if(!r.ok)return;
+const a=[['Users',d.users],['Active',d.activeUsers],['Tips',d.tips],['Open tips',d.openTips],['Audit',d.audit],['History',d.history]];
+v7overview.innerHTML=a.map(x=>'<div class="rounded-xl bg-slate-50 p-4"><div class="text-xs text-slate-500">'+x[0]+'</div><div class="text-2xl font-bold">'+x[1]+'</div></div>').join('');
+}catch(e){}})();
+</script>
+</body></html>

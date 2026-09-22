@@ -1,0 +1,17 @@
+<!doctype html><html lang="am"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ECC Login</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+<div class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl">
+<h1 class="text-2xl font-bold mb-1">የጉምሩክ መረጃ ሲስተም</h1><p class="text-slate-400 mb-6">የተጠቃሚ መግቢያ</p>
+<div id="loginBox"><input id="u" class="w-full p-3 rounded bg-slate-800 mb-3" placeholder="Username">
+<input id="p" type="password" class="w-full p-3 rounded bg-slate-800 mb-3" placeholder="Password">
+<button onclick="login()" class="w-full p-3 rounded bg-blue-600 font-semibold">ግባ</button></div>
+<div id="mfaBox" class="hidden"><p class="mb-3 text-slate-300">Authenticator ኮድ ያስገቡ።</p>
+<input id="mfa" inputmode="numeric" maxlength="6" class="w-full p-3 rounded bg-slate-800 mb-3 text-center text-2xl tracking-widest" placeholder="000000">
+<button onclick="verify()" class="w-full p-3 rounded bg-emerald-600 font-semibold">አረጋግጥ</button></div>
+<p id="msg" class="text-red-300 mt-4"></p></div>
+<script src="api.js"></script><script>
+let mfaToken=null;
+async function login(){msg.textContent="";try{const d=await eccLogin(u.value,p.value);if(d.mfaRequired){mfaToken=d.mfaToken;loginBox.classList.add("hidden");mfaBox.classList.remove("hidden");}else location.href="admin.html";}catch(e){msg.textContent=e.message}}
+async function verify(){msg.textContent="";try{await eccVerifyMfa(mfaToken,mfa.value);location.href="admin.html"}catch(e){msg.textContent=e.message}}
+</script></body></html>

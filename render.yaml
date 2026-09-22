@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ecc-tip-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install --no-audit --no-fund
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
+      - key: JWT_EXPIRES
+        value: 8h
+      - key: MFA_ISSUER
+        value: Ethiopian Customs Commission
